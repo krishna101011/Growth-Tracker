@@ -9,13 +9,21 @@ export function format(date: Date, formatStr: string): string {
   const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
   const monthFull = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
-  return formatStr
-    .replace("yyyy", String(year))
-    .replace("MM", pad(month))
-    .replace("MMM", monthNames[month - 1])
-    .replace("MMMM", monthFull[month - 1])
-    .replace("dd", pad(day))
-    .replace("d", String(day));
+  // Token-based replacement in longest-first order to avoid substring collisions
+  const tokens: [string, string][] = [
+    ["yyyy", String(year)],
+    ["MMMM", monthFull[month - 1]],
+    ["MMM", monthNames[month - 1]],
+    ["MM", pad(month)],
+    ["dd", pad(day)],
+    ["d", String(day)],
+  ];
+
+  let result = formatStr;
+  for (const [token, value] of tokens) {
+    result = result.split(token).join(value);
+  }
+  return result;
 }
 
 export function parseISO(dateStr: string): Date {

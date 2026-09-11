@@ -1,5 +1,5 @@
 import { Section, ScoreEntry, RangeMetrics, OverallScore, ChartDataPoint } from "./types";
-import { eachDayOfInterval, eachWeekOfInterval, eachMonthOfInterval, format, parseISO, isWithinInterval, startOfWeek, startOfMonth, endOfMonth } from "./dates";
+import { eachDayOfInterval, eachWeekOfInterval, eachMonthOfInterval, format, parseISO, endOfMonth } from "./dates";
 
 // ─── Overall Growth Score ──────────────────────────────────────────────────────
 
@@ -184,11 +184,7 @@ export function buildChartData(
     };
 
     for (const section of activeSections) {
-      const sEntries = entries
-        .filter((e) => e.sectionId === section.id && e.date <= lookupDate && e.date >= rawDate)
-        .sort((a, b) => b.date.localeCompare(a.date));
-      
-      // Try exact date first, then most recent
+      // Try exact date first, then most recent within the bucket
       const exactEntry = entries.find(
         (e) => e.sectionId === section.id && e.date === rawDate
       );

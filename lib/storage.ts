@@ -1,9 +1,11 @@
-import { AppSettings, Section, ScoreEntry, AppState, AIKeySlot } from "./types";
+import { AppSettings, Section, ScoreEntry, AppState, AIKeySlot, Goal, GoalEntry } from "./types";
 
 const KEYS = {
   sections: "gg_sections",
   entries: "gg_entries",
   settings: "gg_settings",
+  goals: "gg_goals",
+  goalEntries: "gg_goal_entries",
 } as const;
 
 // ─── Default Settings ─────────────────────────────────────────────────────────
@@ -151,6 +153,64 @@ export function removeAIKey(id: string): AppSettings {
   return settings;
 }
 
+// ─── Goals ────────────────────────────────────────────────────────────────────
+
+export function getGoals(): Goal[] {
+  return safeRead<Goal[]>(KEYS.goals, []);
+}
+
+export function saveGoals(goals: Goal[]): boolean {
+  return safeWrite(KEYS.goals, goals);
+}
+
+export function upsertGoal(goal: Goal): Goal[] {
+  const all = getGoals();
+  const idx = all.findIndex((g) => g.id === goal.id);
+  if (idx >= 0) {
+    all[idx] = goal;
+  } else {
+    all.push(goal);
+  }
+  saveGoals(all);
+  return all;
+}
+
+export function deleteGoal(id: string): { goals: Goal[]; goalEntries: GoalEntry[] } {
+  const goals = getGoals().filter((g) => g.id !== id);
+  const goalEntries = getGoalEntries().filter((e) => e.goalId !== id);
+  saveGoals(goals);
+  saveGoalEntries(goalEntries);
+  return { goals, goalEntries };
+}
+
+// ─── Goal Entries ─────────────────────────────────────────────────────────────
+
+export function getGoalEntries(): GoalEntry[] {
+  return safeRead<GoalEntry[]>(KEYS.goalEntries, []);
+}
+
+export function saveGoalEntries(entries: GoalEntry[]): boolean {
+  return safeWrite(KEYS.goalEntries, entries);
+}
+
+export function upsertGoalEntry(entry: GoalEntry): GoalEntry[] {
+  const all = getGoalEntries();
+  const idx = all.findIndex((e) => e.id === entry.id);
+  if (idx >= 0) {
+    all[idx] = entry;
+  } else {
+    all.push(entry);
+  }
+  saveGoalEntries(all);
+  return all;
+}
+
+export function deleteGoalEntry(id: string): GoalEntry[] {
+  const entries = getGoalEntries().filter((e) => e.id !== id);
+  saveGoalEntries(entries);
+  return entries;
+}
+
 // ─── Full export / import ─────────────────────────────────────────────────────
 
 export function exportData(): AppState {
@@ -158,6 +218,8 @@ export function exportData(): AppState {
     sections: getSections(),
     entries: getEntries(),
     settings: getSettings(),
+    goals: getGoals(),
+    goalEntries: getGoalEntries(),
   };
 }
 
@@ -168,6 +230,9 @@ export function importData(data: AppState): void {
   saveSections(data.sections);
   saveEntries(data.entries);
   if (data.settings) saveSettings(data.settings);
+  // Backward compatible: goals/goalEntries may not exist in older backups
+  if (Array.isArray(data.goals)) saveGoals(data.goals);
+  if (Array.isArray(data.goalEntries)) saveGoalEntries(data.goalEntries);
 }
 
 export function clearAllData(): void {

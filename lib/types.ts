@@ -124,10 +124,40 @@ export interface AIReview {
   generatedAt: string;
 }
 
+// ─── Goal System ──────────────────────────────────────────────────────────────
+
+export type MetricType = "duration" | "count" | "numeric" | "binary";
+export type GoalFrequency = "daily" | "weekly" | "monthly" | "custom";
+
+export interface Goal {
+  id: string;
+  sectionId: string;
+  name: string;
+  metricType: MetricType;
+  targetValue: number; // 0 for binary goals
+  unit: string;        // e.g. "hours", "pages", "sessions", ""
+  frequency: GoalFrequency;
+  startDate: string;   // YYYY-MM-DD
+  endDate?: string;    // YYYY-MM-DD, optional
+  active: boolean;
+  createdAt: string;   // ISO datetime
+}
+
+export interface GoalEntry {
+  id: string;
+  goalId: string;
+  date: string;        // YYYY-MM-DD
+  actualValue: number; // for binary: 1=completed, 0=not
+  note?: string;
+  updatedAt: string;   // ISO datetime
+}
+
 // ─── App State ────────────────────────────────────────────────────────────────
 
 export interface AppState {
   sections: Section[];
   entries: ScoreEntry[];
   settings: AppSettings;
+  goals?: Goal[];
+  goalEntries?: GoalEntry[];
 }
